@@ -68,7 +68,7 @@ Buat file konfigurasi Holmes agar dapat terhubung dengan instansi Grafana dan Pr
        enabled: true
        config:
          api_url: "http://localhost:3000"
-         api_key: "glsa_DCyLlODJ9kngUmdfZHgj9qRjbYFhhjgG_34faf921" # Sesuaikan dengan Token Service Account Grafana Anda
+         api_key: "glsa_xxxxxx" # Sesuaikan dengan Token Service Account Grafana Anda
          enable_rendering: true
    ```
 

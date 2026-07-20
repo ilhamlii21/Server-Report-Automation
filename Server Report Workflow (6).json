@@ -1,0 +1,1862 @@
+{
+  "name": "Server Report Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -32
+      ],
+      "id": "22004a00-8a6c-4f36-b2cc-8b9279f5e5b1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"from\": {{ $now.minus({ hours: 2 }).toMillis() }},\n  \"to\": {{ $now.toMillis() }},\n  \"report_date\": \"{{ $now.toFormat('dd LLLL yyyy') }}\",\n  \"period\": \"{{ $now.minus({ months: 1 }).toFormat('LLLL yyyy') }}\",\n  \"server\": \"ilhamvm2\",\n  \"reported_by\": \"n8n Server Automation\",\n  \"pic\": \"Ilham\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -176,
+        -32
+      ],
+      "id": "5fece0fe-66ec-4f20-9951-d9b17f605fa5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[2h])) * 100)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        304,
+        -1792
+      ],
+      "id": "5c31c13c-d1b6-4518-ac75-f7036dc76d18",
+      "name": "Prometheus AVG CPU"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "100 - (min(irate(node_cpu_seconds_total{mode=\"idle\"}[2h])) * 100)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        304,
+        -1664
+      ],
+      "id": "8d8dcb75-243b-438a-980b-195ba0effcef",
+      "name": "Prometheus PEAK CPU"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "sum(rate(node_network_receive_bytes_total{device!~\"lo\"}[2h])) * 8 / 1000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        -432
+      ],
+      "id": "3d481ab1-49ef-4386-af83-a75d5068b3de",
+      "name": "Prometheus NET Inbound"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "(node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes) / 1024 / 1024 / 1024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        -1072
+      ],
+      "id": "7e4d3b25-048b-432f-8a62-2cc4c0199b87",
+      "name": "Prometheus Swap Used"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "((node_filesystem_size_bytes{mountpoint=\"/\"} - node_filesystem_free_bytes{mountpoint=\"/\"}) - (node_filesystem_size_bytes{mountpoint=\"/\"} offset 30d - node_filesystem_free_bytes{mountpoint=\"/\"} offset 30d)) / 1024 / 1024 / 1024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        -704
+      ],
+      "id": "aeb28514-9c21-4d3e-b444-8b5145f10035",
+      "name": "Prometheus Pertumbuhan Disk"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "sum(rate(node_network_transmit_bytes_total{device!~\"lo\"}[2h])) * 8 / 1000000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        -304
+      ],
+      "id": "b2ee00a5-f7a0-4940-b8a2-d0db6fd99e42",
+      "name": "Prometheus NET Outbond"
+    },
+    {
+      "parameters": {
+        "command": "echo \"test saran dari holmes\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        304,
+        -1536
+      ],
+      "id": "f4adccab-be23-47bc-bcdc-a50d71d8c1e5",
+      "name": "Holmes ask CPU"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "avg_over_time(((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)[2h:1m])"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        -1360
+      ],
+      "id": "77eea21b-abbb-486e-80ea-423f1ac3ceaa",
+      "name": "Prometheus Prometheus AVG RAM"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "max_over_time(((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)[2h:1m])"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        -1216
+      ],
+      "id": "83d17386-8727-4beb-8a80-0553ec8d7d5b",
+      "name": "Prometheus Peak RAM"
+    },
+    {
+      "parameters": {
+        "command": "ps -eo pmem,comm | sort -k 1 -nr | head -n 5"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        688,
+        -1376
+      ],
+      "id": "09422ca4-21a6-4eea-9061-f34a0bf073cd",
+      "name": "Proses Makan RAM"
+    },
+    {
+      "parameters": {
+        "command": "echo \"saran dari holmes tentang ram\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        688,
+        -1248
+      ],
+      "id": "f01eae9b-07c8-4904-8589-b1849a4dab11",
+      "name": "Saran RAM Holmes"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "(1 - (node_filesystem_free_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        -848
+      ],
+      "id": "b38c8935-2a09-4232-b92c-4484ab86b662",
+      "name": "Prometheus Disk Usage (% / Partisi Root)"
+    },
+    {
+      "parameters": {
+        "content": "## POIN 3\n**",
+        "height": 1872,
+        "width": 864,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        -1872
+      ],
+      "typeVersion": 1,
+      "id": "f363c5cc-a021-4fab-8f64-5cfd0a560ae3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "node_systemd_unit_state{state=\"failed\"} == 1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        336,
+        112
+      ],
+      "id": "b9359241-cf76-47c8-bf80-8cb24cf10cc1",
+      "name": "Active/Failed"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "node_procs_state{state=\"zombie\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        336,
+        256
+      ],
+      "id": "7e1ed888-694b-4461-a6ac-8b1c93754422",
+      "name": "Zombie Process"
+    },
+    {
+      "parameters": {
+        "command": "echo \"holmes ask Analisis status systemd server ini. Berikan 1 kalimat catatan evaluasi (Notes) yang formal dan padat dalam Bahasa Indonesia.\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        336,
+        400
+      ],
+      "id": "4b72ce73-0bd3-4cc2-977b-c1dd782afc4f",
+      "name": "Notes : Systemd Holmes ask"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "pm2_restarts"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        688
+      ],
+      "id": "7eaf8548-5548-451d-bd72-fa4ce565c6dd",
+      "name": "Prometheus PM2 Restart"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "pm2_uptime"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        592
+      ],
+      "id": "4de85441-c42f-4ab9-ab86-5885f8bed2b0",
+      "name": "Prometheus PM2 Restart1"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "pm2_up"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        528,
+        544
+      ],
+      "id": "b129624d-6514-420e-bb1f-e96f91e2e22c",
+      "name": "Prometheus PM2 List services"
+    },
+    {
+      "parameters": {
+        "command": "echo \"test\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        672,
+        720
+      ],
+      "id": "563ec70e-97ba-4678-845b-f879a2ae2601",
+      "name": "Notes PM2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = $('Docker Health').first().json.stdout;\n\n// Parsing output gabungan\nconst runningSection = stdout.split('===RUNNING===\\n')[1].split('===RESTARTS===')[0].trim();\nconst restartsSection = stdout.split('===RESTARTS===\\n')[1].split('===VOLUMES===')[0].trim();\nconst volumesVal = stdout.split('===VOLUMES===\\n')[1].split('===IMAGES===')[0].trim();\nconst imagesVal = stdout.split('===IMAGES===\\n')[1].split('===DANGLING===')[0].trim();\nconst danglingVal = parseInt(stdout.split('===DANGLING===\\n')[1].trim());\n\n// Logika Deteksi Restart Abnormal\nconst restartLines = restartsSection.split('\\n');\nlet abnormalRestarts = [];\nfor (const line of restartLines) {\n  const parts = line.split(': ');\n  if (parts.length === 2) {\n    const name = parts[0].replace('/', '');\n    const count = parseInt(parts[1]);\n    if (count > 0) {\n      abnormalRestarts.push(`${name} (${count}x)`);\n    }\n  }\n}\n\nconst isAbnormal = abnormalRestarts.length > 0 \n  ? `⚠ Ya (Terjadi Restart di: ${abnormalRestarts.join(', ')})` \n  : \"✔ Tidak\";\n\n// Logika Cleanup Status\nconst cleanupStatus = danglingVal > 0 \n  ? `⚠ Perlu Cleanup (Ada ${danglingVal} dangling image)` \n  : \"✔ Bersih\";\n\n// Logika Notes Otomatis\nconst notes = abnormalRestarts.length > 0 \n  ? \"Harap periksa logs container yang sering restart.\" \n  : \"Semua kontainer Docker berjalan optimal dan efisien.\";\n\n// Output data bersih\nreturn [{\n  json: {\n    running_containers: runningSection,\n    restart_abnormal: isAbnormal,\n    volume_size: volumesVal,\n    image_size: imagesVal,\n    cleanup_status: cleanupStatus,\n    notes: notes\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        944
+      ],
+      "id": "81e4fd4a-5102-4c80-a7ba-35339a3d9a4a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "command": "echo \"===RUNNING===\" && docker ps --format \"{{.Names}} ({{.Status}})\" && echo \"===RESTARTS===\" && docker inspect --format='{{.Name}}: {{.RestartCount}}' $(docker ps -q) && echo \"===VOLUMES===\" && docker system df | grep \"Local Volumes\" | awk '{print $4 \" volumes (\" $6 \")\"}' && echo \"===IMAGES===\" && docker system df | grep \"Images\" | awk '{print $4 \" images (\" $6 \")\"}' && echo \"===DANGLING===\" && docker images -f dangling=true -q | wc -l"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        336,
+        864
+      ],
+      "id": "edba0771-ab52-40b3-b36d-4ace02009d8b",
+      "name": "Docker Health"
+    },
+    {
+      "parameters": {
+        "command": "echo \"docker\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        336,
+        992
+      ],
+      "id": "7bf89930-dfd1-4c45-aee1-e51fcf2c8643",
+      "name": "Notes Docker Health"
+    },
+    {
+      "parameters": {
+        "command": "echo \"===LIST===\" && crontab -l 2>/dev/null || echo \"No active cronjobs\" && echo \"===FAILING===\" && (grep -i \"cron\" /var/log/syslog 2>/dev/null | grep -i -E \"error|failed|failure\" | tail -n 5 || echo \"No failing cronjobs\") && echo \"===CHANGES===\" && (stat -c \"%y\" /var/spool/cron/crontabs/ilhamvm2 2>/dev/null || stat -c \"%y\" /etc/crontab || echo \"Unknown\")"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        512,
+        1136
+      ],
+      "id": "e2ac1636-c897-427f-9702-b2dff9057d91",
+      "name": "Cronjob"
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = $('Cronjob').first().json.stdout;\n\nconst listVal = stdout.split('===LIST===\\n')[1].split('===FAILING===')[0].trim();\nconst failingVal = stdout.split('===FAILING===\\n')[1].split('===CHANGES===')[0].trim();\nconst changesVal = stdout.split('===CHANGES===\\n')[1].trim();\n\nconst isFailing = failingVal.toLowerCase().includes('error') || failingVal.toLowerCase().includes('fail')\n  ? `⚠ Ya (Terjadi error di syslog)`\n  : \"✔ Tidak\";\n\nconst notes = isFailing.includes('Ya')\n  ? \"Terdeteksi kegagalan eksekusi cronjob di log sistem. Harap periksa syslog.\"\n  : \"Tugas terjadwal (cronjob) berjalan lancar tanpa error.\";\n\nreturn [{\n  json: {\n    cronjob_list: listVal,\n    cronjob_failing: isFailing,\n    schedule_changes: changesVal,\n    notes: notes\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        1136
+      ],
+      "id": "247fc279-5f05-4f1a-b7b1-af59980d7397",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const stdout = $('Security Audit').first().json.stdout.trim();\n\ntry {\n  // Membersihkan tanda markdown ```json jika disertakan oleh AI\n  const cleanJsonText = stdout.replace(/```json/g, '').replace(/```/g, '').trim();\n  const parsedData = JSON.parse(cleanJsonText);\n  \n  return [{ json: parsedData }];\n} catch (error) {\n  // Fallback jika terjadi error parsing\n  return [{\n    json: {\n      ssh_login: \"Gagal memindai log\",\n      suspicious_ip: \"Tidak dapat dideteksi\",\n      update_packages: \"Gagal memeriksa update\",\n      ssl_expiry: \"Gagal mendeteksi SSL\",\n      firewall_status: \"Gagal memeriksa UFW\",\n      notes: \"Error parsing data AI: \" + error.message\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        1472
+      ],
+      "id": "02f24641-5845-4988-a2c4-a66c470a4248",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "command": "echo \"secrity audit\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        304,
+        1472
+      ],
+      "id": "68abd1c9-1128-4f69-89fe-57d447df1ad0",
+      "name": "Security Audit"
+    },
+    {
+      "parameters": {
+        "command": "holmes ask \"Audit perubahan sistem (Change Log) pada VM ini selama 30 hari terakhir. Periksa: 1. Paket aplikasi yang diperbarui (/var/log/dpkg.log). 2. Apakah ada OS update. 3. Apakah file konfigurasi NGINX (/etc/nginx) berubah. 4. Apakah ada cronjob baru yang ditambah. 5. Apakah aturan firewall (UFW) berubah. 6. Apakah ada docker image baru. 7. Apakah ada service systemd baru atau yang dinonaktifkan (deprecated). Tulis hasil audit HANYA dalam format JSON mentah valid dengan key: 'package_updated', 'os_update', 'nginx_changed', 'cronjob_added', 'firewall_changed', 'new_docker_image', 'new_services', 'deprecated_services', dan 'notes' (dalam Bahasa Indonesia).\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        272,
+        1776
+      ],
+      "id": "1e6b9f8c-ae6d-4c27-b8db-6dd7d7438ee7",
+      "name": "Log Management Holmes"
+    },
+    {
+      "parameters": {
+        "command": "=holmes ask \"Anda adalah asisten DevOps. Analisis seluruh data laporan performa server berikut: '{{ JSON.stringify($json) }}'. Berdasarkan data tersebut, tolong buatkan: 1. Executive Summary (Rangkuman kondisi server dalam 1 paragraf formal). 2. Recommendations (3-5 poin saran perbaikan yang konkret dan relevan untuk bulan depan). Tulis respon HANYA dalam format JSON mentah valid dengan key: 'executive_summary' dan 'recommendations' (ditulis dalam Bahasa Indonesia).\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        288,
+        2192
+      ],
+      "id": "aef23950-4913-4093-ac40-a3e50de4f322",
+      "name": "Recommendations for next month"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c6803999c4fd85daf6c225",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "image",
+              "url": "http://20.205.17.18/renders/cpu.png"
+            },
+            {
+              "type": "image",
+              "url": "http://20.205.17.18/renders/ram.png"
+            },
+            {
+              "type": "image",
+              "url": "http://20.205.17.18/renders/disk.png"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        2560
+      ],
+      "id": "5a61d9d0-254d-48ca-851e-9ef99fc4a344",
+      "name": "Append a block",
+      "credentials": {
+        "notionApi": {
+          "id": "NRtB2qhuJ7w4l6RE",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=curl -H \"Authorization: Bearer glsa_xxxxxx\" \"http://localhost:3000/render/d-solo/rYdddlPWk/grafanavm2?orgId=1&panelId=77&width=1000&height=500&from=1784517502013&to=1784524702024&tz=Asia%2FMakassar\" -o /var/www/html/renders/cpu.png"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        288,
+        2496
+      ],
+      "id": "5ed6244f-903c-4943-a3dc-8e0b57339180",
+      "name": "Render Image ID:77 CPU"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        960,
+        2560
+      ],
+      "id": "7375c0db-1da6-4ea6-896b-90eb61980290",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "command": "=curl -H \"Authorization: Bearer glsa_xxxxxx\" \"http://localhost:3000/render/d-solo/rYdddlPWk/grafanavm2?orgId=1&panelId=78&width=1000&height=500&from=1784517502013&to=1784524702024&tz=Asia%2FMakassar\" -o /var/www/html/renders/ram.png"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        288,
+        2624
+      ],
+      "id": "f7bbdb6b-47d5-47af-ab5e-b2384a041aa1",
+      "name": "Render Image ID:78 RAM"
+    },
+    {
+      "parameters": {
+        "command": "=curl -H \"Authorization: Bearer glsa_xxxxxx\" \"http://localhost:3000/render/d-solo/rYdddlPWk/grafanavm2?orgId=1&panelId=152&width=1000&height=500&from=1784517502013&to=1784524702024&tz=Asia%2FMakassar\" -o /var/www/html/renders/disk.png"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        288,
+        2752
+      ],
+      "id": "6ce4a28d-908a-49df-ab06-57c9c94c52e0",
+      "name": "Render Image ID:152 Disk"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        -1664
+      ],
+      "id": "e22b40dc-a25a-4aa9-b838-210025fca2e8",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 6
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        -1296
+      ],
+      "id": "5f7d19c1-37dc-4538-accb-7d6f6e217ee2",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c680c3b0cddc8aec7bb600",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.2.1. Average RAM usage: {{ parseFloat($('Prometheus Prometheus AVG RAM').first().json.data.result[0].value[1]).toFixed(2) }}%"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.2.2. Peak RAM usage: {{ parseFloat($('Prometheus Peak RAM').first().json.data.result[0].value[1]).toFixed(2) }}%"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.2.3. Swap usage: {{ parseFloat($('Prometheus Swap Used').first().json.data.result[0].value[1]).toFixed(2) }} GB / {{ parseFloat($('Prometheus Swap Total').first().json.data.result[0].value[1]).toFixed(2) }} GB"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.2.4. Process paling makan RAM:  {{ $('Proses Makan RAM').first().json.stdout }}"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.2.5. Notes: {{ $('Saran RAM Holmes').first().json.stdout }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        -1232
+      ],
+      "id": "da09c166-9bba-42be-9ddb-f87e4d91366d",
+      "name": "3.2",
+      "credentials": {
+        "notionApi": {
+          "id": "4F2nghkT5NLxwytK",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        -832
+      ],
+      "id": "74053b8e-42ee-404e-8307-0921f4bbf18f",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "url": "http://20.205.17.18:9090/api/v1/query",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "node_memory_SwapTotal_bytes / 1024 / 1024 / 1024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        688,
+        -1104
+      ],
+      "id": "4a05d23d-ed10-40b1-a624-d74b963d9ee5",
+      "name": "Prometheus Swap Total"
+    },
+    {
+      "parameters": {
+        "command": "du -h --max-depth=1 /var/log 2>/dev/null | sort -hr | head -n 5"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -560
+      ],
+      "id": "3905bdd4-3c3b-4b07-9596-3a2543c7f63b",
+      "name": "Top 5 Folder"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.notion.com/v1/blocks/3a3fa968a2c680298f54feef60c0ae43/children",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_xxxxxx"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\n  {\n    \"children\": [\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"3.3.1. Disk % per partition: \" + (\n                  $('Prometheus Disk Usage (% / Partisi Root)').first().json.data.result && \n                  $('Prometheus Disk Usage (% / Partisi Root)').first().json.data.result.length > 0\n                    ? parseFloat($('Prometheus Disk Usage (% / Partisi Root)').first().json.data.result[0].value[1]).toFixed(2) + \"%\"\n                    : \"0.00%\"\n                )\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"3.3.2. Pertumbuhan disk dibanding bulan lalu: \" + (\n                  $('Prometheus Pertumbuhan Disk').first().json.data.result && \n                  $('Prometheus Pertumbuhan Disk').first().json.data.result.length > 0\n                    ? parseFloat($('Prometheus Pertumbuhan Disk').first().json.data.result[0].value[1]).toFixed(2) + \" GB\"\n                    : \"0.00 GB\"\n                )\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"3.3.3. Folder terbesar (top 5):\"\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"code\",\n        \"code\": {\n          \"language\": \"plain text\",\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": $('Top 5 Folder').first().json.stdout || \"Tidak ada data folder\"\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1296,
+        -816
+      ],
+      "id": "647fb5c7-ee6b-4cd8-9569-aa1f13a4e065",
+      "name": "3.3"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c680c19546cc4a64c46395",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.1.1. Avg CPU: {{ parseFloat($('Prometheus AVG CPU').first().json.data.result[0].value[1]).toFixed(2) }}%"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.1.2. Peak CPU: {{ parseFloat($('Prometheus PEAK CPU').first().json.data.result[0].value[1]).toFixed(2) }}%"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.1.3. Notes: {{ $('Holmes ask CPU').first().json.stdout }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1264,
+        -1648
+      ],
+      "id": "81475690-a172-4de6-beb1-2a82e2feb886",
+      "name": "3.1",
+      "credentials": {
+        "notionApi": {
+          "id": "4F2nghkT5NLxwytK",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        -416
+      ],
+      "id": "15ad241e-dedb-48b8-8e3d-fb9cbe95661a",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "command": "echo \"jaringan aman\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        528,
+        -144
+      ],
+      "id": "08b7eb2c-1284-4276-9260-015482c091ff",
+      "name": "Saran"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        128
+      ],
+      "id": "9124c109-a79a-4fca-9fc6-c5fc99b079b6",
+      "name": "Merge5"
+    },
+    {
+      "parameters": {
+        "content": "## POIN 4\n**",
+        "height": 1264,
+        "width": 864,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "b4ffa233-657f-424b-9f6b-4addcb00de32",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c680a185a5c3eb41474f55",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.4.1. Average RX/TX: RX {{ parseFloat($('Prometheus NET Inbound').first().json.data.result[0].value[1]).toFixed(2) }} Mbps / TX {{ parseFloat($('Prometheus NET Outbond').first().json.data.result[0].value[1]).toFixed(2) }} Mbps"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=3.4.2. Notes: {{ $('Saran').first().json.stdout }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1312,
+        -400
+      ],
+      "id": "8606ba8e-61e5-4c29-9c04-af48a8a9b241",
+      "name": "3.4",
+      "credentials": {
+        "notionApi": {
+          "id": "4F2nghkT5NLxwytK",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c6803a8423d15da3ca9afe",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=4.1.1 Failed Services: {{ $('Active/Failed').first().json.data.result && $('Active/Failed').first().json.data.result.length > 0 ? \"⚠ Gagal di: \" + $('Active/Failed').first().json.data.result.map(r => r.metric.name).join(', ') : \"✔ Semua service berjalan normal\" }}"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=4.1.2 Zombie Processes: {{ $('Zombie Process').first().json.data.result && $('Zombie Process').first().json.data.result.length > 0 ? $('Zombie Process').first().json.data.result[0].value[1] : '0' }}"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=4.1.3 Notes: {{ $('Notes : Systemd Holmes ask').first().json.stdout }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1360,
+        144
+      ],
+      "id": "69f011ef-7c63-43d1-b2d0-6c190040b063",
+      "name": "4.1",
+      "credentials": {
+        "notionApi": {
+          "id": "4F2nghkT5NLxwytK",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 4
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        544
+      ],
+      "id": "672a3eea-e01b-45eb-bab0-caab3928d868",
+      "name": "Merge6"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.notion.com/v1/blocks/3a3fa968a2c6806fb49ad482e0771b83/children",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_xxxxxx"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\n  {\n    \"children\": [\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"List services (online / stopped / errored):\"\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"code\",\n        \"code\": {\n          \"language\": \"plain text\",\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": (\n                  $('Prometheus PM2 List services').first().json.data.result && \n                  $('Prometheus PM2 List services').first().json.data.result.length > 0\n                    ? $('Prometheus PM2 List services').first().json.data.result.map(r => r.metric.name + \" (\" + (r.value[1] === \"1\" ? \"online\" : \"stopped\") + \")\").join('\\n')\n                    : \"Tidak ada service PM2 yang aktif\"\n                )\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Restart count: \" + (\n                  $('Prometheus PM2 Restart').first().json.data.result && \n                  $('Prometheus PM2 Restart').first().json.data.result.length > 0\n                    ? $('Prometheus PM2 Restart').first().json.data.result.map(r => r.metric.name + \": \" + r.value[1] + \"x\").join(', ')\n                    : \"0\"\n                )\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Uptime: \" + (\n                  $('Prometheus PM2 Restart1').first().json.data.result && \n                  $('Prometheus PM2 Restart1').first().json.data.result.length > 0\n                    ? $('Prometheus PM2 Restart1').first().json.data.result.map(r => r.metric.name + \": \" + (parseFloat(r.value[1]) / 3600 / 24).toFixed(1) + \" hari\").join(', ')\n                    : \"-\"\n                )\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Notes: \" + ($('Notes PM2').first().json.stdout || \"Semua service Node.js/PM2 berjalan normal.\")\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1360,
+        576
+      ],
+      "id": "fde84280-a6d1-4a52-ba9c-046cdd552e4b",
+      "name": "3."
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        992,
+        944
+      ],
+      "id": "1c4dd4e7-4b97-4968-865b-aeddcfd4e847",
+      "name": "Merge7"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.notion.com/v1/blocks/3a3fa968a2c680cea976e585f3cebfbf/children",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ntn_xxxxxx"
+            },
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\n  {\n    \"children\": [\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Running containers:\"\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"code\",\n        \"code\": {\n          \"language\": \"plain text\",\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": $('Code in JavaScript').first().json.running_containers || \"Tidak ada kontainer berjalan\"\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Restart count abnormal?: \" + $('Code in JavaScript').first().json.restart_abnormal\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Volume size summary: \" + $('Code in JavaScript').first().json.volume_size\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Image size: \" + $('Code in JavaScript').first().json.image_size\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Cleanup status: \" + $('Code in JavaScript').first().json.cleanup_status\n              }\n            }\n          ]\n        }\n      },\n      {\n        \"object\": \"block\",\n        \"type\": \"bulleted_list_item\",\n        \"bulleted_list_item\": {\n          \"rich_text\": [\n            {\n              \"type\": \"text\",\n              \"text\": {\n                \"content\": \"Notes: \" + ($('Notes Docker Health').first().json.stdout || $('Code in JavaScript').first().json.notes)\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1376,
+        944
+      ],
+      "id": "f6cc2f7e-8c78-448b-97a0-1831fc12ab6f",
+      "name": "3.5"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c680dd9ed0e9bb2c08ba02",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=Cronjob list:\n{{ $('Code in JavaScript1').first().json.cronjob_list || 'Tidak ada cronjob aktif' }}"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=Cronjob failing?: {{ $('Code in JavaScript1').first().json.cronjob_failing }}"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=Perubahan jadwal?: {{ $('Code in JavaScript1').first().json.schedule_changes }}"
+            },
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=Notes: {{ $('Code in JavaScript1').first().json.notes }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        1136
+      ],
+      "id": "0c307c90-3f5a-41cd-8262-2f1c6e13c022",
+      "name": "4.4",
+      "credentials": {
+        "notionApi": {
+          "id": "4F2nghkT5NLxwytK",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## POIN 5\n**",
+        "height": 336,
+        "width": 864,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        1328
+      ],
+      "typeVersion": 1,
+      "id": "ee2aba7d-336e-4a7e-b848-83afee9f6c4c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "blockId": {
+          "__rl": true,
+          "value": "3a3fa968a2c680869d1ce71886b6542b",
+          "mode": "id"
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "bulleted_list_item",
+              "textContent": "=Notes: {{ $('').first().json.notes }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        1472
+      ],
+      "id": "991d1ef4-3183-40b8-8c9e-e7aa22f0c77f",
+      "name": "4.",
+      "credentials": {
+        "notionApi": {
+          "id": "4F2nghkT5NLxwytK",
+          "name": "Notion account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## POIN 9\n**",
+        "height": 336,
+        "width": 864
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        1696
+      ],
+      "typeVersion": 1,
+      "id": "bf571519-bc25-4424-bae3-b52aafded986",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## POIN 10\n**",
+        "height": 336,
+        "width": 864,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        2048
+      ],
+      "typeVersion": 1,
+      "id": "d0c2e6f0-6204-47b3-b9bd-267fbdaa2a27",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## POIN 11\n**",
+        "height": 560,
+        "width": 864,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        2416
+      ],
+      "typeVersion": 1,
+      "id": "ce70395d-2a49-4497-8f4d-9fb188dc1a56",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Prometheus AVG CPU",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus PEAK CPU",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus Disk Usage (% / Partisi Root)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus NET Inbound",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus Swap Used",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus Pertumbuhan Disk",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus NET Outbond",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus Prometheus AVG RAM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus Peak RAM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Proses Makan RAM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Saran RAM Holmes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Holmes ask CPU",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Active/Failed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Zombie Process",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notes : Systemd Holmes ask",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus PM2 List services",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus PM2 Restart",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus PM2 Restart1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notes PM2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Docker Health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notes Docker Health",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cronjob",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Security Audit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Render Image ID:77 CPU",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Render Image ID:78 RAM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Render Image ID:152 Disk",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prometheus Swap Total",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Top 5 Folder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Saran",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus NET Outbond": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Proses Makan RAM": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Holmes ask CPU": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Docker Health": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cronjob": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "4.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Security Audit": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Image ID:77 CPU": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Image ID:78 RAM": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Render Image ID:152 Disk": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Append a block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append a block": {
+      "main": [
+        []
+      ]
+    },
+    "Prometheus AVG CPU": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus PEAK CPU": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "3.1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus Prometheus AVG RAM": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus Peak RAM": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Prometheus Swap Used": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Saran RAM Holmes": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "3.2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus Disk Usage (% / Partisi Root)": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus Pertumbuhan Disk": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Prometheus Swap Total": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "3.3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Top 5 Folder": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "3.3": {
+      "main": [
+        []
+      ]
+    },
+    "Prometheus NET Inbound": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "3.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Saran": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Active/Failed": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zombie Process": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Notes : Systemd Holmes ask": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "3.4": {
+      "main": [
+        []
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "4.1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notes PM2": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Prometheus PM2 List services": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prometheus PM2 Restart": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Prometheus PM2 Restart1": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge6": {
+      "main": [
+        [
+          {
+            "node": "3.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notes Docker Health": {
+      "main": [
+        [
+          {
+            "node": "Merge7",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge7": {
+      "main": [
+        [
+          {
+            "node": "3.5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "4.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5651135a-870e-4569-b3c1-65c3526174e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "71b7000e462b35a4bf26275d518dbea71c86b522c8987c702591dff6e71c8b69"
+  },
+  "id": "tJICDN7FeegaRU5Z",
+  "tags": []
+}
