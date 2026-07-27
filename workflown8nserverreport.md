@@ -20,26 +20,24 @@ Workflow ini dirancang untuk:
 Workflow ini dibagi menjadi beberapa modul visual (menggunakan *Sticky Notes*) yang mewakili poin-poin dalam template Laporan Server di Notion:
 
 ### **Poin 3: Sumber Daya Server (Server Resources)**
-Bagian ini mengambil data performa dan mengirimkannya ke Notion:
+Bagian ini mengambil data performa server menggunakan **HTTP Request ke Prometheus API** (tanpa CLI Command di n8n):
 * **3.1. CPU Usage**:
-  - `Prometheus AVG CPU`: Mengambil rata-rata utilisasi CPU selama 2 jam terakhir.
-  - `Prometheus PEAK CPU`: Mengambil puncak (peak) utilisasi CPU selama 2 jam terakhir.
-  - `Holmes ask CPU`: Menganalisis utilisasi CPU untuk memberikan saran/notes.
-  - **Notion Block**: Memperbarui bullet list dengan Avg CPU, Peak CPU, dan Notes dari Holmes.
+  - `Prometheus AVG CPU`: Mengambil rata-rata utilisasi CPU selama 2 jam terakhir (HTTP GET ke Prometheus).
+  - `Prometheus PEAK CPU`: Mengambil puncak (peak) utilisasi CPU selama 2 jam terakhir (HTTP GET ke Prometheus).
+  - `Holmes ask CPU` / `AI Analysis`: Menganalisis data utilisasi CPU untuk memberikan catatan rekomendasi.
+  - **Notion Block**: Memperbarui bullet list dengan Avg CPU, Peak CPU, dan rekomendasi AI.
 * **3.2. RAM & Swap Usage**:
-  - `Prometheus AVG RAM` & `Prometheus Peak RAM`: Mengambil rata-rata dan peak RAM usage.
-  - `Prometheus Swap Used` & `Prometheus Swap Total`: Mengambil kapasitas swap terpakai dan total swap.
-  - `Proses Makan RAM`: CLI command (`ps -eo pmem,comm | sort -k 1 -nr | head -n 5`) untuk mendeteksi 5 proses teratas yang paling banyak mengonsumsi memori.
-  - `Saran RAM Holmes`: CLI command untuk meminta saran pengoptimalan RAM dari Holmes.
+  - `Prometheus AVG RAM` & `Prometheus Peak RAM`: Mengambil rata-rata dan peak RAM usage via Prometheus API.
+  - `Prometheus Swap Used` & `Prometheus Swap Total`: Mengambil kapasitas swap terpakai dan total swap via Prometheus API.
+  - `Top 5 Proses Makan RAM`: Mengambil data 5 proses teratas yang mengonsumsi memori terbesar menggunakan query Prometheus (`topk(5, node_process_memory_bytes)` atau sejenisnya) tanpa menjalankan command SSH langsung.
   - **Notion Block**: Memperbarui data RAM, Swap, top processes, dan rekomendasi RAM.
 * **3.3. Disk Usage**:
-  - `Prometheus Disk Usage`: Mengambil persentase ruang disk terpakai pada partisi root (`/`).
-  - `Prometheus Pertumbuhan Disk`: Mengambil pertumbuhan disk dibanding 30 hari yang lalu.
-  - `Top 5 Folder`: CLI command (`du -h --max-depth=1 /var/log 2>/dev/null | sort -hr | head -n 5`) untuk mengambil folder dengan ukuran terbesar di `/var/log`.
-  - **Notion Block**: Mengirim request PATCH HTTP langsung ke API Notion untuk menyisipkan list info disk dan block code berisi 5 folder terbesar.
+  - `Prometheus Disk Usage`: Mengambil persentase ruang disk terpakai pada partisi root (`/`) via Prometheus API.
+  - `Prometheus Pertumbuhan Disk`: Mengambil pertumbuhan disk dibanding 30 hari yang lalu via Prometheus API.
+  - `Top 5 Folder Terbesar` (Penting): Tidak lagi dijalankan langsung melalui CLI n8n, melainkan menggunakan **Cronjob lokal VM** (`collect_top_files.sh`) yang mencatat kapasitas 5 file/folder terbesar di `/var/log/*` ke dalam file `.prom` untuk dibaca oleh `node_exporter` Textfile Collector. n8n kemudian memanggil data ini via Prometheus query `topk(5, node_dir_file_size_bytes)`.
+  - **Notion Block**: Mengirim request PATCH HTTP langsung ke API Notion untuk menyisipkan list info disk dan block code berisi 5 folder log terbesar.
 * **3.4. Network Bandwidth**:
-  - `Prometheus NET Inbound` & `Prometheus NET Outbond`: Mengambil rata-rata traffic masuk (RX) dan keluar (TX) dalam Mbps.
-  - `Saran`: CLI command untuk memvalidasi kondisi jaringan.
+  - `Prometheus NET Inbound` & `Prometheus NET Outbond`: Mengambil rata-rata traffic masuk (RX) dan keluar (TX) dalam Mbps menggunakan query Prometheus.
   - **Notion Block**: Mengirim data rata-rata RX/TX dan catatan jaringan ke Notion.
 
 ---
@@ -57,13 +55,11 @@ Bagian ini memantau service yang berjalan di server:
   - `Notes PM2`: Rekomendasi/notes performa PM2.
   - **Notion Block**: Menyisipkan daftar service, jumlah restart, uptime (dikonversi dari detik ke hari), dan notes ke Notion.
 * **Docker Health**:
-  - `Docker Health`: Menjalankan CLI terpadu untuk memeriksa container aktif, restart abnormal, volume size, image size, dan jumlah dangling image.
-  - `Code in JavaScript`: Parser teks output Docker CLI untuk mendeteksi restart abnormal atau kebutuhan cleanup.
-  - **Notion Block**: Memperbarui status kesehatan Docker di Notion.
+  - `Docker Health / Storage`: Metrik kesehatan Docker (volume count/size, image count/size, reclaimable space) dan jumlah kontainer berjalan dikumpulkan secara lokal di VM via cronjob (`collect_docker_storage.sh`) ke node_exporter Textfile Collector, lalu dipanggil oleh n8n via Prometheus API HTTP Request.
+  - `Keterbatasan cAdvisor`: cAdvisor/Prometheus hanya bisa menampilkan jumlah total kontainer berjalan (`node_docker_containers_running`) dan data kapasitas disk Docker. Tidak bisa get nama kontainer + uptime dinamis di Notion secara langsung karena keterbatasan format matriks Prometheus.
+  - **Notion Block**: Memperbarui status kesehatan Docker di Notion secara berkala.
 * **Cronjob Status**:
-  - `Cronjob`: CLI command untuk memeriksa isi crontab aktif, error terkait cron di syslog, serta mendeteksi perubahan jadwal terakhir.
-  - `Code in JavaScript1`: Parser status cron untuk mendeteksi kegagalan eksekusi.
-  - **Notion Block**: Mengirimkan daftar cronjob, status error, dan notes ke Notion.
+  - `Cronjob`: Memeriksa kegagalan eksekusi cronjob lokal VM menggunakan data logs.
 
 ---
 
@@ -90,11 +86,15 @@ Bagian ini memantau service yang berjalan di server:
 ---
 
 ### **Poin 11: Lampiran Grafik (Grafana Renders)**
-* **Grafana Panel Image Rendering**:
-  - `Render Image ID:77 CPU`, `Render Image ID:78 RAM`, `Render Image ID:152 Disk`:
-    Mengeksekusi perintah `curl` dengan menyertakan authorization token Grafana untuk mendownload grafik performa ke direktori `/var/www/html/renders/` di web server lokal.
-  - `Merge` & `Append a block`:
-    Menggabungkan seluruh gambar render (`cpu.png`, `ram.png`, `disk.png`) dan menambahkannya ke halaman Notion sebagai block gambar (Image blocks).
+* **Grafana Panel Image Rendering & Supabase Integration**:
+  - `Get Image CPU`, `Get Image RAM`, `Get Image DISK`, `Get Image APPS RAM`:
+    Mengunduh gambar grafik format PNG langsung dari Grafana Image Renderer via HTTP GET (Response Format: File/Binary).
+  - `HTTP Supabase Bucket (1/2/3)`:
+    Mengunggah secara mandiri file grafik PNG tersebut ke **Supabase Storage** (bucket `grafanarenderiimage`) menggunakan HTTP POST + `service_role` key.
+  - `MinIO Status`:
+    Sempat dicoba menggunakan MinIO lokal VM (S3-compatible) dengan membuat bucket `imagerenderminio` dan akses `public/download` via CLI `mc`, namun integrasi di n8n masih terhambat masalah otentikasi browser autofill yang menyisipkan sandi salah ke credential n8n (akan dikerjakan lebih lanjut).
+  - `Merge` & `Notion Node`:
+    Menggabungkan output upload dan menyisipkan 4 grafik dari Supabase ke dalam Notion sekaligus menggunakan block image.
 
 ---
 

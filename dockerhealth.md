@@ -1,144 +1,51 @@
-# Panduan Automasi Laporan Docker Health Menggunakan n8n
+# Panduan Integrasi Laporan Docker Health & Storage (Revisi Aman)
 
-Dokumen ini menjelaskan konfigurasi untuk mengisi poin **4.3 Docker Health** pada template laporan bulanan server di Notion secara otomatis menggunakan node **Execute Command** di n8n.
-
----
-
-## 1. Konsep Kerja
-
-Karena n8n terinstal secara native di VM (menggunakan PM2), n8n dapat berinteraksi langsung dengan Docker Daemon lokal melalui CLI. Kita menggunakan node **Execute Command** untuk mengeksekusi perintah CLI Docker, lalu memformat teks hasilnya menggunakan JavaScript di node **Code** untuk dikirim langsung ke Notion.
+Dokumen ini menjelaskan konfigurasi untuk mengisi poin **4.3 Docker Health** pada template laporan bulanan server di Notion secara aman menggunakan data metrik dari Prometheus dan penyimpanan grafis dari Supabase.
 
 ---
 
-## 2. Pemetaan Command Docker & Kolom Notion
+## 1. Konsep Kerja & Keamanan Baru
 
-Berikut adalah perintah-perintah yang dijalankan pada node **Execute Command** di n8n untuk mendapatkan data di masing-masing kolom Notion:
-
-### **A. Running Containers**
-* **Tujuan**: Menampilkan daftar container yang sedang berjalan beserta uptime-nya.
-* **Perintah CLI**:
-  ```bash
-  docker ps --format "{{.Names}} ({{.Status}})"
-  ```
-* **Contoh Output**:
-  ```text
-  prometheus (Up 13 minutes)
-  grafana-renderer (Up 13 minutes (healthy))
-  grafana (Up 13 minutes)
-  ```
-
-### **B. Restart Count Abnormal?**
-* **Tujuan**: Mendeteksi apakah ada container yang sering mengalami crash/restart.
-* **Perintah CLI**:
-  ```bash
-  docker inspect --format='{{.Name}}: {{.State.RestartCount}}' $(docker ps -aq)
-  ```
-* **Contoh Output**:
-  ```text
-  /prometheus: 0
-  /grafana-renderer: 0
-  /node-exporter: 2
-  ```
-* **Logika n8n**: Jika salah satu kontainer memiliki angka restart > 0, n8n akan menandainya sebagai `⚠ Ya (Terjadi Restart)` dan mencantumkan nama kontainernya. Jika semua bernilai 0, maka ditulis `✔ Tidak`.
-
-### **C. Volume Size Summary**
-* **Tujuan**: Mengambil ringkasan kapasitas memori disk yang digunakan oleh Docker Volume.
-* **Perintah CLI**:
-  ```bash
-  docker system df | grep "Local Volumes" | awk '{print $4 " volumes (" $6 ")"}'
-  ```
-* **Contoh Output**:
-  ```text
-  4 volumes (1.2GB)
-  ```
-
-### **D. Image Size**
-* **Tujuan**: Menampilkan total kapasitas penyimpanan yang digunakan oleh Docker Images yang terunduh.
-* **Perintah CLI**:
-  ```bash
-  docker system df | grep "Images" | awk '{print $4 " images (" $6 ")"}'
-  ```
-* **Contoh Output**:
-  ```text
-  5 images (1.85GB)
-  ```
-
-### **E. Cleanup Status**
-* **Tujuan**: Memeriksa apakah ada sampah image tak terpakai (*dangling*) yang belum dibersihkan.
-* **Perintah CLI**:
-  ```bash
-  docker images -f dangling=true -q | wc -l
-  ```
-* **Logika n8n**: 
-  * Jika output = `0`, status: `✔ Bersih (Tidak ada image dangling)`.
-  * Jika output > `0`, status: `⚠ Perlu Cleanup (Ada X image menggantung)`.
+Untuk alasan keamanan dan pembatasan firewall VM, n8n **tidak diizinkan mengeksekusi CLI Command secara langsung** di host VM. Seluruh status kesehatan Docker diambil melalui query HTTP API ke **Prometheus** yang datanya di-supply secara berkala oleh:
+*   **Cronjob Lokal VM** (`collect_docker_storage.sh`) yang mencatat status internal Docker Engine ke folder `node_exporter` Textfile Collector.
 
 ---
 
-## 3. Langkah-Langkah Pembuatan di n8n
+## 2. Batasan Teknis & Solusi Metrik Docker
 
-### **Langkah 1: Membuat Node Execute Command**
-1. Tambahkan node **Execute Command** di canvas n8n Anda.
-2. Ubah kolom **Command** menjadi skrip gabungan berikut agar berjalan dalam satu panggilan:
-   ```bash
-   echo "===RUNNING===" && docker ps --format "{{.Names}} ({{.Status}})" && echo "===RESTARTS===" && docker inspect --format='{{.Name}}: {{.State.RestartCount}}' \$(docker ps -aq) && echo "===VOLUMES===" && docker system df | grep "Local Volumes" | awk '{print \$4 \" volumes (\" \$6 \")\"}' && echo "===IMAGES===" && docker system df | grep "Images" | awk '{print \$4 \" images (\" \$6 \")\"}' && echo "===DANGLING===" && docker images -f dangling=true -q | wc -l
-   ```
-3. Klik **Execute step** untuk mendapatkan output gabungan.
+Berikut adalah status terkini mengenai data yang bisa dikumpulkan oleh Prometheus untuk Laporan Docker Health:
+
+### **A. Running Containers (Keterbatasan Nama & Uptime)**
+*   **Masalah**: Prometheus/cAdvisor tidak dapat menampilkan daftar string nama kontainer dinamis beserta uptimenya (seperti `prometheus (Up 2 days)`) dengan mudah untuk disisipkan ke blok Notion tanpa manipulasi JSON yang sangat rumit.
+*   **Solusi**: Sebagai gantinya, kita memantau **jumlah total kontainer yang sedang berjalan** saja (misal: *7 containers running*). Metrik ini dihitung secara berkala di VM menggunakan cronjob (`docker ps -q | wc -l`) dan disimpan dalam metrik kustom `node_docker_containers_running`.
+
+### **B. Volume, Image, & Reclaimable Space**
+Metrik kapasitas Docker Storage diekstrak dari perintah `docker system df` oleh cronjob lokal VM, dikonversi menjadi tipe data desimal bytes, lalu diekspor sebagai metrik berikut:
+*   `node_docker_volumes_count` & `node_docker_volumes_size_bytes` (Jumlah & ukuran volume lokal).
+*   `node_docker_images_count` & `node_docker_images_size_bytes` (Jumlah & ukuran image terunduh).
+*   `node_docker_reclaimable_size_bytes` (Ukuran sampah Docker yang bisa dibersihkan).
+
+n8n akan melakukan query PromQL untuk menarik metrik-metrik tersebut, lalu memformat satuannya ke format yang manusiawi (misal: GB atau MB) menggunakan JavaScript di n8n.
 
 ---
 
-### **Langkah 2: Menambahkan Node Code (Parser JavaScript)**
-Hubungkan output Execute Command ke node **Code** baru dengan script parser JavaScript berikut:
+## 3. Alur Pengiriman Gambar Grafik (Image Render)
 
-```javascript
-const stdout = $('Execute Command').first().json.stdout;
+Untuk grafik performa visual (seperti Grafik utilisasi CPU/RAM dari Grafana):
+1.  n8n mengambil gambar grafik format PNG langsung dari **Grafana Image Renderer** via HTTP GET.
+2.  Gambar tersebut kemudian diunggah (*upload*) secara otomatis ke **Supabase Storage** sebagai bucket penyimpanan sementara karena **MinIO lokal VM masih dalam tahap uji coba dan belum berhasil dikonfigurasi** (terhambat masalah autentikasi browser autofill).
+3.  Supabase mengembalikan tautan publik (*Public URL*) gambar, yang kemudian dikirimkan oleh n8n ke Notion API untuk ditempelkan di halaman laporan.
 
-// Parsing output gabungan
-const runningSection = stdout.split('===RUNNING===\n')[1].split('===RESTARTS===')[0].trim();
-const restartsSection = stdout.split('===RESTARTS===\n')[1].split('===VOLUMES===')[0].trim();
-const volumesVal = stdout.split('===VOLUMES===\n')[1].split('===IMAGES===')[0].trim();
-const imagesVal = stdout.split('===IMAGES===\n')[1].split('===DANGLING===')[0].trim();
-const danglingVal = parseInt(stdout.split('===DANGLING===\n')[1].trim());
+---
 
-// Logika Deteksi Restart Abnormal
-const restartLines = restartsSection.split('\n');
-let abnormalRestarts = [];
-for (const line of restartLines) {
-  const parts = line.split(': ');
-  if (parts.length === 2) {
-    const name = parts[0].replace('/', '');
-    const count = parseInt(parts[1]);
-    if (count > 0) {
-      abnormalRestarts.push(`${name} (${count}x)`);
-    }
-  }
-}
+## 4. Query PromQL yang Digunakan n8n
 
-const isAbnormal = abnormalRestarts.length > 0 
-  ? `⚠ Ya (Terjadi Restart di: ${abnormalRestarts.join(', ')})` 
-  : "✔ Tidak";
+Berikut adalah gabungan query PromQL yang dijalankan di n8n untuk mendapatkan data Docker Health:
 
-// Logika Cleanup Status
-const cleanupStatus = danglingVal > 0 
-  ? `⚠ Perlu Cleanup (Ada ${danglingVal} dangling image)` 
-  : "✔ Bersih";
-
-// Logika Notes Otomatis
-const notes = abnormalRestarts.length > 0 
-  ? "Harap periksa logs container yang sering restart." 
-  : "Semua kontainer Docker berjalan optimal dan efisien.";
-
-// Kirim ke Notion
-return [{
-  json: {
-    running_containers: runningSection,
-    restart_abnormal: isAbnormal,
-    volume_size: volumesVal,
-    image_size: imagesVal,
-    cleanup_status: cleanupStatus,
-    notes: notes
-  }
-}];
+```promql
+{__name__=~"node_docker_.*"}
 ```
 
-Dengan konfigurasi ini, seluruh poin **4.3 Docker Health** di Notion Anda akan terisi dengan data terbaru dari VM secara instan dan rapi!
+Respon JSON dari query di atas diproses oleh node Code n8n untuk menyusun string laporan yang dikirim ke Notion:
+*   **Restart Count**: `node_docker_containers_running` (Metrik ini mengawasi apakah ada crash loop pada kontainer VM).
+*   **Cleanup Status**: Membaca metrik `node_docker_reclaimable_size_bytes` untuk mendeteksi kapasitas memori yang terbuang sia-sia.
