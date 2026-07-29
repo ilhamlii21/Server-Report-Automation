@@ -184,7 +184,40 @@ Workflow ini **tidak memerlukan** instalasi Holmes AI lokal di VM. Semua analisi
 
 ---
 
-## 6. Status Ketersediaan Poin Laporan (Matriks Fungsionalitas)
+## 6. Alur Render Gambar Grafana ke Supabase & Notion
+
+Poin 11 (Attachments) di dalam workflow n8n menangani pengambilan screenshot grafik performa secara otomatis dengan alur kerja sebagai berikut:
+
+```mermaid
+graph TD
+    A[n8n: HTTP Request GET] -->|Ambil Gambar PNG Binary| B(Grafana Image Renderer API)
+    B -->|Return File Binary| A
+    A -->|HTTP POST Multipart/Form-Data| C[Supabase Storage Bucket]
+    C -->|Simpan Gambar & Return Public URL| A
+    A -->|HTTP PATCH / Notion Node| D[Notion Page Attachment Block]
+```
+
+### Langkah Detail Alur Kerja:
+
+1. **GET Image dari Grafana Image Renderer**:
+   * n8n memanggil endpoint render panel Grafana secara spesifik (misalnya: `http://localhost:3000/render/d-solo/rYdddlPWk/grafanavm2`) menggunakan node **HTTP Request** dengan metode `GET`.
+   * **Authentication**: Menggunakan Service Account Token Grafana (`Bearer <token>`).
+   * **Query Parameters**: Menentukan `panelId` (contoh: CPU, RAM, Disk), `width` (1000), `height` (500), rentang waktu `from` dan `to`.
+   * **Response Format**: Diatur ke **`File`** untuk menerima file PNG biner secara langsung.
+
+2. **Upload ke Supabase Storage**:
+   * Output file biner dari node sebelumnya langsung diteruskan ke node **HTTP Request (Supabase)** dengan metode `POST`.
+   * **Endpoint**: `https://<PROJECT_ID>.supabase.co/storage/v1/object/grafanarenderiimage/<FILE_NAME>.png`
+   * **Headers**: Menggunakan `Authorization: Bearer <service_role_key>` dan `Content-Type: image/png`.
+   * File diunggah ke bucket penyimpanan Supabase (misal bucket: `grafanarenderiimage`).
+
+3. **Menyisipkan Link Gambar ke Notion**:
+   * Setelah Supabase berhasil menyimpan gambar, ia mengembalikan URL publik dari gambar tersebut.
+   * n8n menggunakan node **Notion** (atau **HTTP Request** Notion API) untuk menyisipkan block gambar (`image`) baru ke halaman Notion target dengan mengacu pada URL publik Supabase tersebut.
+
+---
+
+## 7. Status Ketersediaan Poin Laporan (Matriks Fungsionalitas)
 
 Berikut adalah status poin laporan bulanan server berdasarkan arsitektur **tanpa skrip cronjob VM lokal** dan **tanpa Holmes AI**:
 
