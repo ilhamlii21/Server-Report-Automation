@@ -263,7 +263,7 @@ Bagian ini mengaudit kesehatan layanan-layanan penting sistem, status PM2 (Node.
 ---
 
 ## **7. Cost Monitoring (Opsional Jika Cloud)**
-* **Notes:** Poin ini bersifat opsional untuk pemantauan biaya infrastruktur jika server berada di layanan Cloud (seperti AWS, GCP, Azure, dsb.). Di dalam workflow n8n ini, pemantauan Cost/Biaya belum diimplementasikan karena pemantauan dilakukan pada infrastruktur lokal/on-premise (VM independen).
+* **Notes:** Poin ini bersifat opsional untuk pemantauan biaya infrastruktur jika server berada di layanan Cloud (seperti AWS, GCP, Azure, dsb.). Di dalam workflow n8n ini, pemantauan Cost/Biaya belum diimplementasikan karena pemantauan dilakukan pada infrastruktur lokal/on-premise (VM independen). Namun belum ada indikasi untuk memantau hal ini kedepannya.
 
 ---
 
