@@ -21,7 +21,7 @@ Masuk ke terminal VM 2 dan instal Java Runtime (JRE) karena agen Jenkins dijalan
 sudo apt update
 
 # 2. Instal Java JRE 17 (Sesuaikan dengan versi Java di Jenkins Controller Anda)
-sudo apt install openjdk-17-jr-headless -y
+sudo apt install openjdk-17-jre-headless -y
 
 # 3. Buat direktori kerja khusus untuk agen Jenkins
 mkdir -p /home/ilhamvm2/jenkins-agent
@@ -111,3 +111,37 @@ pipeline {
 **Hasil pada Grafana:**
 *   **Grafik CPU VM 1 (Controller):** Tetap datar dan stabil di kisaran **10-15%** (dashboard Jenkins tetap responsif dan lancar dibuka).
 *   **Grafik CPU VM 2 (Runner):** Mengalami lonjakan (*spike*) tajam hingga **100%** selama 90 detik, membuktikan seluruh beban kerja kompilasi sukses didelegasikan ke VM 2.
+
+---
+
+## 4. Troubleshoot Masalah Umum (Troubleshooting)
+
+### **A. Eror: `Permission Denied` saat Pembuatan Direktori di VM 2**
+*   **Gejala:** Build Jenkins gagal dengan pesan eror:
+    `mkdir: cannot create directory ‘/opt/belajar-terraform’: Permission denied`
+*   **Penyebab:** Jenkins Agent berjalan sebagai user biasa (`ilhamvm2`), sedangkan direktori `/opt` atau `/var/www` dimiliki oleh `root`.
+*   **Solusi:** Jalankan perintah berikut sekali saja di terminal **VM 2** untuk membuat folder tersebut dan menyerahkan hak kepemilikannya ke user `ilhamvm2`:
+    ```bash
+    sudo mkdir -p /opt/belajar-terraform /var/www
+    sudo chown -R ilhamvm2:ilhamvm2 /opt/belajar-terraform /var/www
+    ```
+
+### **B. Eror: `terraform: not found` (Exit Code 127)**
+*   **Gejala:** Build Jenkins gagal pada tahap eksekusi Terraform dengan pesan:
+    `terraform: not found`
+*   **Penyebab:** Binary/program Terraform belum terinstal di **VM 2 (Runner)**. Karena eksekusi pipeline dipindah dari Controller ke Runner, maka VM Runner wajib menginstal perkakas build secara mandiri.
+*   **Solusi:** Masuk ke terminal **VM 2** dan instal Terraform secara resmi dengan perintah berikut:
+    ```bash
+    # 1. Instal dependensi dasar
+    sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+
+    # 2. Tambahkan GPG Key HashiCorp
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+    # 3. Tambahkan repositori resmi HashiCorp ke sistem APT
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+    # 4. Update package manager dan instal Terraform
+    sudo apt-get update && sudo apt-get install terraform -y
+    ```
+
